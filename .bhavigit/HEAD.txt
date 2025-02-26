@@ -1,1 +1,1 @@
-ref: ref/head/main
+ref: refs/head/main

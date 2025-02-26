@@ -26,7 +26,7 @@ def init():
         print("Created bhavigit folder")
         os.makedirs(".bhavigit/objects", exist_ok=True)
         print("Created objects folder")
-        os.makedirs(".bhavigit/ref", exist_ok=True)
+        os.makedirs(".bhavigit/refs", exist_ok=True)
         print("Created refs folder")
     except Exception as e:
         print("Error: ", e)
@@ -172,7 +172,7 @@ def commit(message = "None"):
         commit_order = json.load(file)
         
     time_stamp = time.ctime(time.time())
-    commit_string = "Parent: " + commit_order['prev'] + "\nTimestampe: " + time_stamp + "\nMessage: " + message + "\nFiles: \n"
+    commit_string = "Parent: " + str(commit_order['prev']) + "\nTimestampe: " + time_stamp + "\nMessage: " + message + "\nFiles: \n"
     for file, hash in files_and_hashes.items():
         commit_string += file + "->" + hash + "\n"
     
@@ -180,7 +180,7 @@ def commit(message = "None"):
     hashfunc = hashlib.new("sha256")
     hashfunc.update(commit_string.encode())
     commit_hash = hashfunc.hexdigest()
-    commit_order['prev'] = commit_hash
+    
 
     commit_filename = ".bhavigit/objects/" + commit_hash
     try:
@@ -197,16 +197,17 @@ def commit(message = "None"):
 
     #update branch in HEAD to point to correct file and for that file to contain the current hash
 
-    branch_file = None
+    branch_file = ".bhavigit/"
     with open('.bhavigit/HEAD.txt') as file:
         line = file.readline().split(":")[1].strip()
-        branch_file = line
+        branch_file += line
     if not os.path.exists(branch_file):
         branch_file_create = directory_creation(branch_file)
     with open(branch_file, 'w') as file:
         file.write(commit_hash)
 
-    with open('.bhavigit/commit_order.txt', 'w') as file:
+    commit_order['prev'] = commit_hash
+    with open('.bhavigit/commit_order.json', 'w') as file:
         json.dump(commit_order, file, indent = 1)
         
 
