@@ -14,6 +14,7 @@ import hashlib
 import sys
 import shutil
 import time
+import json
 def init():
 
     if os.path.exists(".bhavigit"):
@@ -32,14 +33,17 @@ def init():
 
     HEAD  = '.bhavigit/HEAD.txt'
     index = '.bhavigit/index.txt'
-    commit_order = '.bhavigit/commit_order.txt'
+    commit_order = '.bhavigit/commit_order.json'
+    commit_order_dict = {}
+    commit_order_dict['prev'] = None
+    commit_order_dict['curr'] = None
 
     with open(HEAD, 'w') as file:
         file.write("ref: refs/head/main\n")
     with open(index, 'w') as file:
         file.write("")
     with open(commit_order, 'w') as file:
-        file.write('previous: \ncurr: ')
+        json.dump(commit_order_dict, file, indent = 1)
     print("intialzied empty bhavi repo")
 
 def copy_file_contents(fp1, fp2):
@@ -151,7 +155,7 @@ def commit(message = "None"):
     '''
     
     #first step
-    prev_commit = ""
+    commit_order = {}
     commit_string = ""
     files_to_commit = ""
     files_and_hashes = {}
@@ -164,16 +168,11 @@ def commit(message = "None"):
     print(f"Dict: {files_and_hashes}")
 
 
-    with open(".bhavigit/commit_order.txt", 'r') as file:
-        lines = file.read().split("\n")
-        #prev_commit_idx = lines[0].index("previous:")
-        prev_commit = lines[0][9:].strip()
+    with open(".bhavigit/commit_order.json", 'r') as file:
+        commit_order = json.load(file)
         
-    if prev_commit == "":
-        prev_commit = "None"
-    
     time_stamp = time.ctime(time.time())
-    commit_string = "Parent: " + prev_commit + "\nTimestampe: " + time_stamp + "\nMessage: " + message + "\nFiles: \n"
+    commit_string = "Parent: " + commit_order['prev'] + "\nTimestampe: " + time_stamp + "\nMessage: " + message + "\nFiles: \n"
     for file, hash in files_and_hashes.items():
         commit_string += file + "->" + hash + "\n"
     
@@ -181,6 +180,7 @@ def commit(message = "None"):
     hashfunc = hashlib.new("sha256")
     hashfunc.update(commit_string.encode())
     commit_hash = hashfunc.hexdigest()
+    commit_order['prev'] = commit_hash
 
     commit_filename = ".bhavigit/objects/" + commit_hash
     try:
@@ -206,6 +206,10 @@ def commit(message = "None"):
     with open(branch_file, 'w') as file:
         file.write(commit_hash)
 
+    with open('.bhavigit/commit_order.txt', 'w') as file:
+        json.dump(commit_order, file, indent = 1)
+        
+
     with open('.bhavigit/index.txt', 'w') as file:
         file.write('')
     print("+++++++++++++++++++++++++")
@@ -214,7 +218,10 @@ def commit(message = "None"):
     print(f'Commited Changes with hash {commit_hash}')
 
 
-        
+#tread lightly
+def purge():     
+    shutil.rmtree(".bhavigit")
+    print("Removed all objects, refs, files, etc from bhavigit")
 
 
 if __name__ == "__main__":
@@ -236,7 +243,17 @@ if __name__ == "__main__":
             print('Did not enter filename')
             sys.exit()
     elif command == 'commit':
-        commit("pls work. 1st try.")
-    
+        if num_args == 2:
+            message = sys.argv[2]
 
+            commit(message)
+    
+    elif command == 'purge':
+        ensure = input("are you sure you want to purge everything (y/n)")
+        if ensure == 'y':
+            purge()
+        elif ensure == 'no':
+            print('didn''t remove anything')
+        else:
+            print('please enter a valid input')
     
