@@ -219,6 +219,29 @@ def commit(message = "None"):
     print(f'Commited Changes with hash {commit_hash}')
 
 
+def log():
+    most_recent_ch = None
+    prev_commit_hash = None
+    commit_log = "====================\n====================\n"
+    with open('.bhavigit/refs/head/main', 'r') as file:
+        most_recent_ch = file.read().strip()
+    
+    prev_commit_hash = most_recent_ch
+    while (prev_commit_hash != "None"):
+        #print(f"Current previous commit hash is {prev_commit_hash}")
+        commit_file = '.bhavigit/objects/' + prev_commit_hash
+        
+        with open(commit_file, 'r') as file:
+            commit_obj = file.read()
+            #print(f"Full Commit  \n{commit_obj}")
+            prev_commit_hash = commit_obj.splitlines()[0].strip().replace(' ', '')
+            prev_commit_hash = prev_commit_hash[prev_commit_hash.index("Parent:") + len("Parent:"):]
+        commit_log = commit_log + commit_obj + "====================\n====================\n"
+
+    
+    print(commit_log)
+
+
 #tread lightly
 def purge():     
     shutil.rmtree(".bhavigit")
@@ -257,4 +280,12 @@ if __name__ == "__main__":
             print('didn''t remove anything')
         else:
             print('please enter a valid input')
-    
+    elif command == 'log':
+        log()
+
+'''
+skipping but still need to do:
+add functionlaity for adding all files/more than 1
+add functionality for commiting if more than 1 file is added
+
+'''
